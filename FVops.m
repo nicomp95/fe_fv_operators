@@ -130,7 +130,7 @@ function [ops,mesh_reduced] = FVops(mesh)
 %               the face separating vertex i from vertex k in the same
 %               triangle, multiplied by the x-component of the normal to
 %               that face, pointing away from vertex i. All entries
-%               innxdS_cf that do not correspond to a face between two
+%               in nxdS_cf that do not correspond to a face between two
 %               different vertices in the same triangle are zero
 %       nydS_cf:    Same as nxdS_cf but the x-component of the normal is
 %               replaced by the y-component
@@ -311,6 +311,8 @@ switch dimension
         %integration over faces
         nudSref = [-1/6, -1/3, 0; 1/6, 0, -1/6; 0, 1/3, 1/6];
         nvdSref = [1/3, 1/6, 0; -1/3, 0, -1/6; 0, -1/6, 1/6];
+        %nudSref = -[0, 1/6, 1/3; -1/6, 0, 1/6; -1/3, -1/6, 0];
+        %nvdSref = -[0, -1/3, -1/6; 1/3, 0, 1/6; 1/6, -1/6, 0];
         nxdS_cf = kron(dydudiag*chiraldiag,nudSref )+ kron(dydvdiag*chiraldiag,nvdSref);    
         nydS_cf = - kron(dxdudiag*chiraldiag,nudSref) - kron(dxdvdiag*chiraldiag,nvdSref);
         %integration over volumes
@@ -329,8 +331,16 @@ switch dimension
             mean_cQ1_bdy = kron(speye(n_elements_bdy),[3/4, 1/4; 1/4, 3/4]);
             mean_cQ2_bdy = kron(speye(n_elements_bdy),[5/12,-1/12,2/3;-1/12,5/12,2/3]);
             %integration over face
-            nxdS_cf_bdy = kron(normal(:,1).*absJbdy,speye(2));
-            nydS_cf_bdy = kron(normal(:,2).*absJbdy,speye(2));
+            %nxdS_cf_bdy = sum(kron(normal(:,1).*absJbdy/2,speye(2)),2);
+            %nxdS_cf_bdy = spdiags(nxdS_cf_bdy, 0, length(nxdS_cf_bdy), length(nxdS_cf_bdy));
+            %nydS_cf_bdy = sum(kron(normal(:,2).*absJbdy/2,speye(2)),2);
+            %nydS_cf_bdy = spdiags(nydS_cf_bdy, 0, length(nydS_cf_bdy), length(nydS_cf_bdy));
+            nxdS_cf_bdy = normal(:,1) .* absJbdy / 2;
+            nxdS_cf_bdy = reshape([nxdS_cf_bdy.'; nxdS_cf_bdy.'], [], 1);
+            nxdS_cf_bdy = spdiags(nxdS_cf_bdy, 0, length(nxdS_cf_bdy), length(nxdS_cf_bdy));
+            nydS_cf_bdy = normal(:,2) .* absJbdy / 2;
+            nydS_cf_bdy = reshape([nydS_cf_bdy.'; nydS_cf_bdy.'], [], 1);
+            nydS_cf_bdy = spdiags(nydS_cf_bdy, 0, length(nydS_cf_bdy), length(nydS_cf_bdy));
             dS_cf_bdy = kron(absJbdy,speye(2));
         end
     case 3

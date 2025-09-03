@@ -108,7 +108,7 @@ function [ops,mesh_reduced] = TaylorHood_v3(mesh)
 %               using a similar interpolation (for instance by writing J =
 %               ones(1,n_elements)*int_Q0Q2*func(F) where F is a vector of
 %               Q2 nodal values
-%       int_Q1Q2: F.'*int_Q2Q2*G integrates the product of a Q1 function
+%       int_Q1Q2: F.'*int_Q1Q2*G integrates the product of a Q1 function
 %               with nodal values F and a Q2 function with nodal values G
 %       int_Q0Q2: F.'*int_Q0Q2*G integrates the product of a Q0 function
 %               (with element-wise values F) and a Q2 function with nodal
@@ -195,28 +195,28 @@ if isfield(mesh,'matchlist')
     volmat(volmat>0) = 1;
     %iterate, extending connectivity to multistep paths until all paths are
     %identified
-    tic
-    disp('computation of matched sets')
+    %tic
+    %disp('computation of matched sets')
     volmat0 = sparse(size(volmat,1),size(volmat,2));
     while any(any(volmat0~=volmat))
         volmat0 = volmat;
         volmat = volmat*volmat;
         volmat(volmat > 0) = 1;
     end
-    toc
+    %toc
     %identify sets of mutually matched points 
-    disp('start identification of first member of matched sets')
-    tic
+    %disp('start identification of first member of matched sets')
+    %tic
     matchcount = sum(volmat,2);
     matchsets = unique(volmat(matchcount>1,:),'rows');
-    size(matchsets)
+    %size(matchsets)
     %associate each node in mutually matched set with first node in set
     volmap2 = 1:n_nodes;
     for ii=1:length(matchsets(:,1))
         jj = find(matchsets(ii,:),1,'first');
         volmap2(matchsets(ii,:).'==1) = jj;
     end
-    toc
+    %toc
     %recreate matrix version of matchlist mapping, but to unique node for
     %any larger set of mutually matched nodes
     volmat2 =  sparse((1:n_nodes).', volmap2,ones(size(volmap)),n_nodes,n_nodes);
@@ -236,7 +236,7 @@ if isfield(mesh,'matchlist')
     mesh_reduced.n_vrep = n_rep2;
     mesh_reduced.n_nodes = n_nodes-n_rep;
     mesh_reduced.n_vertex = n_vertex-n_rep2;
-    mesh_reduced.location = x(unique(volmap));
+    mesh_reduced.location = x(unique(volmap),:);
 else
     mesh_reduced = mesh;
     n1reducedton1 = speye(n_vertex);
@@ -342,7 +342,7 @@ switch dimension
             %weight function for each boundary element
             absJdiag_bdy = spdiags(absJbdy,0,n_elements_bdy,n_elements_bdy);
             %P2-P2 product nodal integration
-            weights_n2n2_bdy = [2/15, -1/30, 1/15; -1/30, 215, 1/15; 1/15, 1/15, 8/15];
+            weights_n2n2_bdy = [2/15, -1/30, 1/15; -1/30, 2/15, 1/15; 1/15, 1/15, 8/15];
             int_n2n2_bdy = kron(absJdiag_bdy,weights_n2n2_bdy);
             %P2-P2 nodal integration by quadratic interpolation
             weights_n2n2_bdy_interp = spdiags([1/6, 1/6, 2/3].',0,3,3);
@@ -402,7 +402,7 @@ end
         ops.int_Q1Q1_bdy = int_n1n1_bdy;
         ops.int_Q1Q1_interp_bdy = int_n1n1_bdy_interp;
         ops.int_Q0Q1_bdy = int_en1_bdy;
-        ops.area_e.bdy = area_e_bdy;
+        ops.area_e = area_e_bdy;
     end
 
 end

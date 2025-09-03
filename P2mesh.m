@@ -94,10 +94,10 @@ switch dimension
                connect2, connect3, connect6];  %simply appends mid-point label to existing eges array above to replicate structure for a 1D connectivity array with midpoints; structure for 3D mesh would be [connect1 connect2 connect3 connect5 connect6; connect1 connect2 connect4 connect5 connect7; connect1 connect3 connect4 connect6 connect7 etc] 
             oppositevertex = [connect3; connect2; connect1];
             %list edge indices for faces, identify which faces are unique by identifying faces corresponding to unique edges (or combinations, in higher dimensions)      
-            faces = [edgeind(1:n_elements); edgeind(n_elements+(1:n_elements)); edgeind(2*n_elements+(1:n_elements))];   %each row has the edgeind identifiers for the edges that are part of the boundary of the face; for 3D, this would be [edgeind(1:n_elements), edgeind(n_elements+(1:n_elements)); edgeind(1:n_elements), edgeind(2*n_elements+(1:n_elements)); ...]
+            faces = [edgeind(1:n_elements); edgeind(n_elements+(1:n_elements)); edgeind(2*n_elements+(1:n_elements))];  %each row has the edgeind identifiers for the edges that are part of the boundary of the face; for 3D, this would be [edgeind(1:n_elements), edgeind(n_elements+(1:n_elements)); edgeind(1:n_elements), edgeind(2*n_elements+(1:n_elements)); ...]
             %faces = sort(faces,2);  %placeholder for 3D; redundant here as only one edge is involved in each face
             [~,connectind,faceind] = unique(faces,'rows');    %the information contained here is the same as in 'edges' but this structure should be more easily adapted to higher dimensions
-            facecount = histcounts(faceind,1:max(faceind));
+            facecount = histcounts(faceind,1:max(faceind)+1);
             surfind = connectind(facecount==1);
             connect_bdy_out = connect_faces(surfind,:);
             oppositevertex = oppositevertex(surfind);
@@ -105,12 +105,13 @@ switch dimension
             %of the boundary element
             vec1=x(connect_bdy_out(:,2),:)-x(connect_bdy_out(:,1),:);
             vec2=x(oppositevertex,:)-x(connect_bdy_out(:,1),:);
-            flip=find(vec1(:,1).*vec2(:,2)-vec1(:,2).*vec2(:,1)>0);
+            %flip=find(vec1(:,1).*vec2(:,2)-vec1(:,2).*vec2(:,1)>0); %old
+            flip=find(vec1(:,1).*vec2(:,2)-vec1(:,2).*vec2(:,1)<0);
             connect_bdy_out(flip,[1,2])=connect_bdy_out(flip,[2,1]);
             vec1(flip,:) = -vec1(flip,:);
             %compute normal
             normal_out = [vec1(:,2), -vec1(:,1)];
-            absnormal = (vec1(:,1).^2+vec1(:,1).^2).^(1/2)*[1 1];
+            absnormal = (vec1(:,1).^2+vec1(:,2).^2).^(1/2)*[1 1];
             normal_out = normal_out./absnormal;
             %output
             mesh_out.connect_bdy = connect_bdy_out;
